@@ -14,6 +14,8 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
+checked_count = 0  # глобальний лічильник перевірених контрактів
+
 def generate_mock_contract() -> str:
     """Генерує фейкову BSC-адресу контракту (40 hex-символів)."""
     return "0x" + "".join(random.choices("0123456789abcdef", k=40))
@@ -52,12 +54,25 @@ def decide_action(safety: Dict[str, bool]) -> str:
 
 def handle_contract(address: str) -> None:
     """Обробка одного контракту: швидка перевірка + рішення."""
+    global checked_count
+    checked_count += 1
+
     safety = quick_safety_check(address)
     decision = decide_action(safety)
-    logging.info(
-        "Контракт %s | перевірка=%s → рішення=%s",
-        address, safety, decision
-    )
+
+    if decision == "WATCH":
+        green = "\033[92m"
+        reset = "\033[0m"
+        print("\n" + "-"*60)
+        print(f"{green}✅ SAFE — монета #{checked_count} пройшла перевірку, можна купувати{reset}")
+        print(f"Контракт: {address}")
+        print(f"Всього перевірено: {checked_count}")
+        print("-"*60 + "\n")
+    else:
+        logging.info(
+            "Контракт %s | перевірка=%s → рішення=%s",
+            address, safety, decision
+        )
 
 def main():
     logging.info("Старт консольного бота моніторингу (mock)...")
